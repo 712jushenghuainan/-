@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游泳馆会员管理系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* 内联备用样式（防止CSS文件加载失败） */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f4f8; }
+        nav {
+            background: linear-gradient(135deg, #1e40af, #2563eb);
+            color: white;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .nav-brand { font-size: 1.3rem; font-weight: bold; }
+        .nav-links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .nav-links a {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            padding: 0.4rem 1rem;
+            border-radius: 4px;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.15); color: white; }
+        .nav-links button {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.4rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .nav-links button:hover { background: rgba(255,255,255,0.25); }
+        #userDisplay { color: #fff; margin-left: 10px; }
+        main { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+        main h2 { color: #1e293b; margin-bottom: 1.5rem; }
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        th, td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        th { background: #f8fafc; color: #475569; font-weight: 600; }
+        tr:hover { background: #fafbfc; }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .search-box input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.6rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        .search-box button {
+            padding: 0.6rem 1.5rem;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .search-box button:hover { background: #1d4ed8; }
+        .btn-danger { background: #ef4444 !important; color: white !important; border: none !important; padding: 4px 12px !important; border-radius: 4px !important; cursor: pointer !important; }
+        .btn-danger:hover { background: #dc2626 !important; }
+        .btn-success { background: #22c55e !important; color: white !important; border: none !important; padding: 4px 12px !important; border-radius: 4px !important; cursor: pointer !important; }
+        .btn-success:hover { background: #16a34a !important; }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 { margin-bottom: 10px; }
+        .modal-content textarea {
+            width: 100%;
+            height: 80px;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-actions .btn-confirm { background: #ef4444; color: white; border: none; padding: 8px 24px; border-radius: 6px; cursor: pointer; }
+        .modal-actions .btn-confirm:hover { background: #dc2626; }
+        .modal-actions .btn-cancel { background: #9ca3af; color: white; border: none; padding: 8px 24px; border-radius: 6px; cursor: pointer; }
+        .modal-actions .btn-cancel:hover { background: #6b7280; }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .card-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .card-box h3 { margin-bottom: 15px; }
+        .card-box input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            margin: 5px 0 10px 0;
+        }
+        .card-box button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .card-box button:hover { background: #1d4ed8; }
+        @media (max-width: 768px) {
+            nav { flex-direction: column; gap: 8px; }
+            .nav-links { justify-content: center; }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-brand">🏊 游泳馆会员管理系统</div>
+        <div class="nav-links">
+            <a href="/">首页</a>
+            <a href="/disable">禁用/解禁</a>
+            <a href="/system">系统管理</a>
+            <span id="userDisplay"></span>
+            <button onclick="logout()">退出</button>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}
+        <h2>欢迎使用游泳馆会员管理系统</h2>
+        <p style="color:#6b7280;">请点击上方菜单进行操作。</p>
+        <p style="margin-top:10px;color:#6b7280;">当前登录用户：<span id="loginUser"></span></p>
+        {% endblock %}
+    </main>
+
+    <script>
+        // 检查登录状态
+        fetch('/api/current_user')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('userDisplay').textContent = '👤 ' + data.user.username;
+                    // 只在首页显示详细信息（loginUser元素只在首页存在）
+                    const loginUserEl = document.getElementById('loginUser');
+                    if (loginUserEl) {
+                        loginUserEl.textContent = data.user.username + ' (' + data.user.role + ')';
+                    }
+                } else {
+                    showLoginModal();
+                }
+            })
+            .catch(err => {
+                console.error('检查登录状态失败:', err);
+                showLoginModal();
+            });
+
+        function logout() {
+            if (!confirm('确认退出登录吗？')) return;
+            fetch('/api/logout', { method: 'POST' })
+                .then(() => { location.reload(); })
+                .catch(err => { console.error('退出失败:', err); });
+        }
+
+        function showLoginModal() {
+            const username = prompt('请输入用户名：\n(测试账号: admin / cashier1 / readonly1)');
+            if (!username) return;
+            const password = prompt('请输入密码：\n(所有账号默认密码: 123456)');
+            if (!password) return;
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ 登录成功！欢迎 ' + data.user.username);
+                    location.reload();
+                } else {
+                    alert('❌ 登录失败：' + data.message);
+                    showLoginModal();
+                }
+            })
+            .catch(err => {
+                console.error('登录请求失败:', err);
+                alert('登录请求失败，请检查后端服务是否运行');
+            });
+        }
+    </script>
+</body>
+</html>

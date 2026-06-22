@@ -1,0 +1,301 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+}
+
+/* ===== 导航栏 ===== */
+nav {
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    color: white;
+    padding: 0.8rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-brand {
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.nav-links a {
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.nav-links a:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+}
+
+.nav-links button {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.nav-links button:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+/* ===== 主体内容 ===== */
+main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+main h2 {
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+/* ===== 搜索框 ===== */
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.search-box input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.6rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border 0.3s;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.search-box button {
+    padding: 0.6rem 1.5rem;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.3s;
+}
+
+.search-box button:hover {
+    background: #1d4ed8;
+}
+
+/* ===== 表格 ===== */
+table {
+    width: 100%;
+    background: white;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+th, td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+tr:hover {
+    background: #fafbfc;
+}
+
+/* ===== 按钮颜色 ===== */
+.btn-danger {
+    background: #ef4444 !important;
+    color: white !important;
+    border: none !important;
+    padding: 4px 12px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+}
+.btn-danger:hover {
+    background: #dc2626 !important;
+}
+
+.btn-success {
+    background: #22c55e !important;
+    color: white !important;
+    border: none !important;
+    padding: 4px 12px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+}
+.btn-success:hover {
+    background: #16a34a !important;
+}
+
+/* ===== 弹窗 ===== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-content h3 {
+    margin-bottom: 10px;
+    color: #1e293b;
+}
+
+.modal-content textarea {
+    width: 100%;
+    height: 80px;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-actions .btn-confirm {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.modal-actions .btn-confirm:hover {
+    background: #dc2626;
+}
+
+.modal-actions .btn-cancel {
+    background: #9ca3af;
+    color: white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.modal-actions .btn-cancel:hover {
+    background: #6b7280;
+}
+
+/* ===== 两栏布局 ===== */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.card-box {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.card-box h3 {
+    margin-bottom: 15px;
+    color: #1e293b;
+}
+
+.card-box input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    margin: 5px 0 10px 0;
+}
+
+.card-box button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+.card-box button:hover {
+    background: #1d4ed8;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+    nav {
+        flex-direction: column;
+        padding: 0.6rem 1rem;
+        gap: 8px;
+    }
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    main {
+        padding: 0 1rem;
+    }
+    table {
+        font-size: 0.85rem;
+    }
+    th, td {
+        padding: 0.5rem 0.6rem;
+    }
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
