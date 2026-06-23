@@ -15,7 +15,7 @@
     </properties>
 
     <dependencies>
-        <!-- JUnit 测试 -->
+        <!-- 单元测试 -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -23,15 +23,15 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Servlet API（写 Java Web 必须） -->
+        <!-- Servlet API（使用较新版本） -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
+            <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
 
-        <!-- JSP API -->
+        <!-- JSP API（来自 dev 分支） -->
         <dependency>
             <groupId>javax.servlet.jsp</groupId>
             <artifactId>jsp-api</artifactId>
@@ -39,11 +39,25 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- MySQL 驱动（连接数据库必须） -->
+        <!-- JSTL 标签库（来自 feature/deposit-C） -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+        <!-- MySQL 驱动 -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.33</version>
+        </dependency>
+
+        <!-- Jackson JSON 处理（来自 feature/deposit-C） -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.10</version>
         </dependency>
     </dependencies>
 
@@ -61,7 +75,7 @@
                 </configuration>
             </plugin>
 
-            <!-- 这就是你缺失的 Tomcat 7 插件！ -->
+            <!-- Tomcat 7 Maven 插件 -->
             <plugin>
                 <groupId>org.apache.tomcat.maven</groupId>
                 <artifactId>tomcat7-maven-plugin</artifactId>
