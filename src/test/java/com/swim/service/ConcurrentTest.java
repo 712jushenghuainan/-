@@ -1,3 +1,4 @@
+
 package com.swim.service;
 
 import com.swim.dao.CardDAO;
@@ -5,8 +6,8 @@ import com.swim.util.DBUtil;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.concurrent.CountDownLatch;
-
 /**
  * 并发测试 - 演示 READ_COMMITTED 隔离级别
  *
@@ -63,7 +64,8 @@ public class ConcurrentTest {
         try (Connection conn = DBUtil.getConnection()) {
             // 先更新为0，再测试
             String sql = "UPDATE t_card SET balance = ? WHERE card_id = ?";
-            try (var pstmt = conn.prepareStatement(sql)) {
+
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setBigDecimal(1, amount);
                 pstmt.setString(2, cardId);
                 pstmt.executeUpdate();
