@@ -12,9 +12,13 @@ public class CardDAO {
 
     /**
      * 根据卡号查询会员卡信息
+     * 修改点：将 SELECT * 改为显式字段列表，明确包含 creator_id
      */
     public Card findByCardId(Connection conn, String cardId) throws SQLException {
-        String sql = "SELECT * FROM t_card WHERE card_id = ?";
+        // 显式列出所有字段，确保包含 creator_id
+        String sql = "SELECT card_id, member_id, creator_id, card_type, balance, discount_rate, " +
+                "total_consume, total_deposit, card_status, issue_date " +
+                "FROM t_card WHERE card_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, cardId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -66,11 +70,15 @@ public class CardDAO {
         }
     }
 
+    /**
+     * 将 ResultSet 当前行映射为 Card 对象
+     * 注意：字段名必须与 SQL 查询列名一致
+     */
     private Card mapRowToCard(ResultSet rs) throws SQLException {
         Card card = new Card();
         card.setCardId(rs.getString("card_id"));
         card.setMemberId(rs.getInt("member_id"));
-        card.setCreatorId(rs.getInt("creator_id"));
+        card.setCreatorId(rs.getInt("creator_id"));   // 现在一定能取到
         card.setCardType(rs.getString("card_type"));
         card.setBalance(rs.getBigDecimal("balance"));
         card.setDiscountRate(rs.getBigDecimal("discount_rate"));
