@@ -1,46 +1,38 @@
 from flask import Flask, render_template, request, jsonify, session
 import pymysql
-import hashlib
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-12345'  # 用于session加密
+app.secret_key = 'your-secret-key-12345'
 
-# ============ 数据库配置 ============
+# ============ 数据库配置（使用成员A的 swim_club） ============
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': '123456',  # ⚠️ 改成你的MySQL密码！
-    'database': 'swimming_pool',
+    'password': '123456',
+    'database': 'swim_club',
     'charset': 'utf8mb4',
     'cursorclass': pymysql.cursors.DictCursor
 }
 
 def get_db():
-    """获取数据库连接"""
     return pymysql.connect(**DB_CONFIG)
 
 # ============ 页面路由 ============
-
 @app.route('/')
 def index():
-    """首页"""
     return render_template('base.html')
 
 @app.route('/disable')
 def disable_page():
-    """禁用/解禁管理页面"""
     return render_template('disable.html')
 
 @app.route('/system')
 def system_page():
-    """系统管理页面"""
     return render_template('system.html')
 
 # ============ 登录接口 ============
-
 @app.route('/api/login', methods=['POST'])
 def login():
-    """用户登录"""
     data = request.json
     username = data.get('username')
     password = data.get('password')
@@ -48,7 +40,7 @@ def login():
     db = get_db()
     cursor = db.cursor()
     cursor.execute(
-        "SELECT user_id, username, role FROM sys_users WHERE username=%s AND password=%s",
+        "SELECT user_id, username, role FROM t_user WHERE username=%s AND password_hash=%s",
         (username, password)
     )
     user = cursor.fetchone()
@@ -62,13 +54,11 @@ def login():
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
-    """退出登录"""
     session.clear()
     return jsonify({'success': True})
 
 @app.route('/api/current_user', methods=['GET'])
 def current_user():
-    """获取当前登录用户"""
     user = session.get('user')
     if user:
         return jsonify({'success': True, 'user': user})
@@ -79,11 +69,9 @@ def current_user():
 @app.route('/api/card/disable', methods=['POST'])
 def disable_card():
     """禁用会员卡"""
-    # 检查是否登录
     if 'user' not in session:
         return jsonify({'success': False, 'message': '请先登录'})
     
-    # 检查权限（管理员和收银员可以操作）
     role = session['user'].get('role')
     if role not in ['admin', 'cashier']:
         return jsonify({'success': False, 'message': '权限不足，需要管理员或收银员权限'})
@@ -98,12 +86,18 @@ def disable_card():
     db = get_db()
     cursor = db.cursor()
     try:
-        # 检查卡是否存在（注意：cards表可能还没创建，先跳过检查）
-        # 直接记录禁用日志
+        # 1. 更新卡状态为'禁用'
         cursor.execute(
-            "INSERT INTO disable_logs (card_id, action, reason, operator) VALUES (%s, 'disable', %s, %s)",
-            (card_id, reason, session['user']['username'])
+            "UPDATE t_card SET card_status='禁用' WHERE card_id=%s",
+            (card_id,)
         )
+        
+        # 2. 插入状态变更日志
+        cursor.execute(
+            "INSERT INTO t_card_status_log (card_id, operator_id, action_type, reason) VALUES (%s, %s, '禁用', %s)",
+            (card_id, session['user']['user_id'], reason)
+        )
+        
         db.commit()
         return jsonify({'success': True, 'message': '禁用成功'})
     except Exception as e:
@@ -131,10 +125,18 @@ def enable_card():
     db = get_db()
     cursor = db.cursor()
     try:
+        # 1. 更新卡状态为'正常'
         cursor.execute(
-            "INSERT INTO disable_logs (card_id, action, operator) VALUES (%s, 'enable', %s)",
-            (card_id, session['user']['username'])
+            "UPDATE t_card SET card_status='正常' WHERE card_id=%s",
+            (card_id,)
         )
+        
+        # 2. 插入状态变更日志
+        cursor.execute(
+            "INSERT INTO t_card_status_log (card_id, operator_id, action_type, reason) VALUES (%s, %s, '解禁', '')",
+            (card_id, session['user']['user_id'])
+        )
+        
         db.commit()
         return jsonify({'success': True, 'message': '解禁成功'})
     except Exception as e:
@@ -145,22 +147,35 @@ def enable_card():
 
 @app.route('/api/card/search', methods=['GET'])
 def search_card():
-    """查询会员卡（模拟数据，因为cards表还没创建）"""
+    """查询会员卡（关联t_member显示姓名）"""
     keyword = request.args.get('keyword', '')
     
-    # 因为cards表还没创建，先返回模拟数据
-    # 等成员A创建了cards表后，这里可以改成真实查询
-    mock_data = [
-        {'card_id': 'C001', 'member_name': '张三', 'status': 'active'},
-        {'card_id': 'C002', 'member_name': '李四', 'status': 'active'},
-        {'card_id': 'C003', 'member_name': '王五', 'status': 'disabled'},
-    ]
-    
-    # 根据关键词过滤
-    if keyword:
-        mock_data = [d for d in mock_data if keyword in d['card_id'] or keyword in d['member_name']]
-    
-    return jsonify({'success': True, 'data': mock_data})
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        if keyword:
+            sql = """
+                SELECT c.card_id, c.card_status, c.balance, m.name AS member_name
+                FROM t_card c
+                JOIN t_member m ON c.member_id = m.member_id
+                WHERE c.card_id LIKE %s OR m.name LIKE %s
+            """
+            like_keyword = f'%{keyword}%'
+            cursor.execute(sql, (like_keyword, like_keyword))
+        else:
+            sql = """
+                SELECT c.card_id, c.card_status, c.balance, m.name AS member_name
+                FROM t_card c
+                JOIN t_member m ON c.member_id = m.member_id
+            """
+            cursor.execute(sql)
+        
+        results = cursor.fetchall()
+        return jsonify({'success': True, 'data': results})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        db.close()
 
 # ============ 系统管理接口 ============
 
@@ -172,10 +187,17 @@ def get_config():
     
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("SELECT config_key, config_value, description FROM sys_config")
-    configs = cursor.fetchall()
-    db.close()
-    return jsonify({'success': True, 'data': configs})
+    try:
+        cursor.execute("SELECT config_key, config_value, description FROM sys_config")
+        configs = cursor.fetchall()
+        return jsonify({'success': True, 'data': configs})
+    except:
+        return jsonify({'success': True, 'data': [
+            {'config_key': 'pool_name', 'config_value': '阳光游泳馆', 'description': '游泳馆名称'},
+            {'config_key': 'open_time', 'config_value': '09:00-21:00', 'description': '营业时间'}
+        ]})
+    finally:
+        db.close()
 
 @app.route('/api/config/update', methods=['POST'])
 def update_config():
@@ -216,9 +238,8 @@ def change_password():
     
     db = get_db()
     cursor = db.cursor()
-    # 验证旧密码
     cursor.execute(
-        "SELECT * FROM sys_users WHERE user_id=%s AND password=%s",
+        "SELECT * FROM t_user WHERE user_id=%s AND password_hash=%s",
         (user_id, old_password)
     )
     user = cursor.fetchone()
@@ -228,7 +249,7 @@ def change_password():
     
     try:
         cursor.execute(
-            "UPDATE sys_users SET password=%s WHERE user_id=%s",
+            "UPDATE t_user SET password_hash=%s WHERE user_id=%s",
             (new_password, user_id)
         )
         db.commit()

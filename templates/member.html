@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>会员资料管理</h2>
+<div class="search-box">
+    <input type="text" id="memberKeyword" placeholder="输入卡号或姓名查询">
+    <button class="btn" onclick="searchMember()">查询</button>
+    <button class="btn btn-gray" onclick="searchMember('')">显示全部</button>
+</div>
+<div class="card">
+    <table>
+        <thead><tr><th>卡号</th><th>姓名</th><th>电话</th><th>证件号</th><th>地址</th><th>注册日期</th><th>操作</th></tr></thead>
+        <tbody id="memberTableBody"><tr><td colspan="7" style="text-align:center;color:#999;">请点击"显示全部"</td></tr></tbody>
+    </table>
+</div>
+<div class="modal-overlay" id="editModal">
+    <div class="modal-content">
+        <h3>修改会员资料</h3>
+        <input type="hidden" id="editCardId">
+        <div class="form-group"><label>姓名：</label><input type="text" id="editName"></div>
+        <div class="form-group"><label>电话：</label><input type="text" id="editPhone"></div>
+        <div class="form-group"><label>地址：</label><input type="text" id="editAddress"></div>
+        <div class="modal-actions">
+            <button class="btn btn-gray" onclick="closeEditModal()">取消</button>
+            <button class="btn" onclick="saveMember()">保存</button>
+        </div>
+    </div>
+</div>
+<script>
+function searchMember(kw) {
+    var keyword = kw !== undefined ? kw : document.getElementById('memberKeyword').value;
+    fetch('/api/member/search?keyword=' + encodeURIComponent(keyword)).then(function(r) { return r.json(); }).then(function(data) {
+        var tbody = document.getElementById('memberTableBody');
+        if (!data.success || !data.data || data.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">暂无数据</td></tr>'; return;
+        }
+        tbody.innerHTML = data.data.map(function(m) {
+            return '<tr><td>' + m.card_id + '</td><td>' + m.name + '</td><td>' + m.phone + '</td><td>' + m.id_number + '</td><td>' + (m.address || '') + '</td><td>' + m.register_date + '</td><td><button class="btn btn-sm" onclick="showEdit(\'' + m.card_id + '\',\'' + m.name + '\',\'' + m.phone + '\',\'' + (m.address || '') + '\')">修改</button></td></tr>';
+        }).join('');
+    });
+}
+function showEdit(cardId, name, phone, address) {
+    document.getElementById('editCardId').value = cardId;
+    document.getElementById('editName').value = name;
+    document.getElementById('editPhone').value = phone;
+    document.getElementById('editAddress').value = address;
+    document.getElementById('editModal').style.display = 'flex';
+}
+function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+function saveMember() {
+    fetch('/api/member/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({
+        card_id: document.getElementById('editCardId').value,
+        name: document.getElementById('editName').value,
+        phone: document.getElementById('editPhone').value,
+        address: document.getElementById('editAddress').value
+    })}).then(function(r) { return r.json(); }).then(function(data) {
+        showToast(data.message, data.success ? 'success' : 'error');
+        closeEditModal(); searchMember('');
+    });
+}
+</script>
+{% endblock %}

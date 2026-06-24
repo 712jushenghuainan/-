@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>存款管理</h2>
+<div class="card" style="max-width:500px;">
+    <h3>储值卡充值</h3>
+    <div class="form-group"><label>卡号：</label><input type="text" id="depositCardId" placeholder="输入储值卡卡号"></div>
+    <div class="form-group"><label>充值金额：</label><input type="number" id="depositAmount" placeholder="输入充值金额" step="0.01"></div>
+    <button class="btn btn-success" onclick="addDeposit()">确认充值</button>
+    <div id="depositResult" style="margin-top:1rem;color:#6b7280;"></div>
+</div>
+<div class="card" style="max-width:600px;margin-top:1rem;">
+    <h3>存款记录</h3>
+    <button class="btn btn-gray" onclick="loadDepositList()" style="margin-bottom:1rem;">刷新记录</button>
+    <table>
+        <thead><tr><th>流水号</th><th>卡号</th><th>充值金额</th><th>充值时间</th></tr></thead>
+        <tbody id="depositListBody"><tr><td colspan="4" style="text-align:center;color:#999;">点击刷新加载</td></tr></tbody>
+    </table>
+</div>
+<script>
+function addDeposit() {
+    var cardId = document.getElementById('depositCardId').value;
+    var amount = document.getElementById('depositAmount').value;
+    if (!cardId || !amount) { showToast('请填写卡号和金额', 'error'); return; }
+    fetch('/api/deposit', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({card_id: cardId, amount: parseFloat(amount)}) })
+    .then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            showToast('充值成功！卡号 ' + cardId + ' 充入 ' + amount + ' 元', 'success');
+            document.getElementById('depositCardId').value = '';
+            document.getElementById('depositAmount').value = '';
+            loadDepositList();
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+function loadDepositList() {
+    fetch('/api/deposit/list').then(function(r) { return r.json(); }).then(function(data) {
+        var tbody = document.getElementById('depositListBody');
+        if (!data.success || !data.data || data.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">暂无存款记录</td></tr>'; return;
+        }
+        tbody.innerHTML = data.data.map(function(row) {
+            return '<tr><td>' + row.deposit_id + '</td><td>' + row.card_id + '</td><td>' + row.amount + '</td><td>' + row.deposit_date + '</td></tr>';
+        }).join('');
+    });
+}
+loadDepositList();
+</script>
+{% endblock %}

@@ -1,117 +1,70 @@
 {% extends "base.html" %}
-
 {% block content %}
-<h2>🔒 会员禁用/解禁管理</h2>
-
+<h2>会员禁用/解禁管理</h2>
 <div class="search-box">
     <input type="text" id="searchKeyword" placeholder="输入卡号或姓名查询">
-    <button onclick="searchCard()">查询</button>
-    <button onclick="loadAllCards()" style="background:#6b7280;">显示全部</button>
+    <button class="btn" onclick="searchCard()">查询</button>
+    <button class="btn btn-gray" onclick="loadAllCards()">显示全部</button>
 </div>
-
-<table>
-    <thead>
-        <tr>
-            <th>卡号</th>
-            <th>持卡人</th>
-            <th>状态</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody id="cardTableBody">
-        <tr><td colspan="4" style="text-align:center;color:#999;">请输入关键词查询</td></tr>
-    </tbody>
-</table>
-
-<!-- 禁用弹窗 -->
+<div class="card">
+    <table>
+        <thead><tr><th>卡号</th><th>持卡人</th><th>余额</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody id="cardTableBody"><tr><td colspan="5" style="text-align:center;color:#999;">请点击"显示全部"加载数据</td></tr></tbody>
+    </table>
+</div>
 <div class="modal-overlay" id="disableModal">
     <div class="modal-content">
-        <h3>⚠️ 禁用会员卡</h3>
-        <p>卡号：<span id="disableCardId"></span></p>
-        <textarea id="disableReason" placeholder="请输入禁用原因（可选）"></textarea>
+        <h3>禁用会员卡</h3>
+        <p>卡号：<strong id="disableCardId"></strong></p>
+        <div class="form-group"><label>禁用原因：</label><textarea id="disableReason" placeholder="请输入禁用原因"></textarea></div>
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeModal()">取消</button>
-            <button class="btn-confirm" onclick="confirmDisable()">确认禁用</button>
+            <button class="btn btn-gray" onclick="closeModal()">取消</button>
+            <button class="btn btn-danger" onclick="confirmDisable()">确认禁用</button>
         </div>
     </div>
 </div>
-
 <script>
-function searchCard() {
-    const keyword = document.getElementById('searchKeyword').value;
-    fetch('/api/card/search?keyword=' + encodeURIComponent(keyword))
-        .then(r => r.json())
-        .then(data => { renderTable(data.data); });
+function loadAllCards() { searchCard(''); }
+function searchCard(kw) {
+    var keyword = kw !== undefined ? kw : document.getElementById('searchKeyword').value;
+    fetch('/api/card/search?keyword=' + encodeURIComponent(keyword)).then(function(r) { return r.json(); }).then(function(data) {
+        var tbody = document.getElementById('cardTableBody');
+        if (!data.success || !data.data || data.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.data.map(function(card) {
+            var isActive = card.card_status === '正常';
+            var statusHtml = isActive ? '<span style="color:#22c55e;">正常</span>' : '<span style="color:#ef4444;">禁用</span>';
+            var btnHtml = isActive
+                ? '<button class="btn btn-danger btn-sm" onclick="showDisable(\'' + card.card_id + '\')">禁用</button>'
+                : '<button class="btn btn-success btn-sm" onclick="enableCard(\'' + card.card_id + '\')">解禁</button>';
+            return '<tr><td>' + card.card_id + '</td><td>' + (card.member_name || '') + '</td><td>' + card.balance + '</td><td>' + statusHtml + '</td><td>' + btnHtml + '</td></tr>';
+        }).join('');
+    });
 }
-
-function loadAllCards() {
-    fetch('/api/card/search?keyword=')
-        .then(r => r.json())
-        .then(data => { renderTable(data.data); });
-}
-
-function renderTable(cards) {
-    const tbody = document.getElementById('cardTableBody');
-    if (!cards || cards.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">暂无数据</td></tr>';
-        return;
-    }
-    tbody.innerHTML = cards.map(card => {
-        const isActive = card.status === 'active';
-        const statusText = isActive ? '✅ 正常' : '🚫 已禁用';
-        const statusColor = isActive ? 'green' : 'red';
-        let btn = isActive 
-            ? `<button class="btn-danger" onclick="showDisable('${card.card_id}')">禁用</button>`
-            : `<button class="btn-success" onclick="enableCard('${card.card_id}')">解禁</button>`;
-        return `<tr>
-            <td>${card.card_id}</td>
-            <td>${card.member_name || '未知'}</td>
-            <td style="color:${statusColor};">${statusText}</td>
-            <td>${btn}</td>
-        </tr>`;
-    }).join('');
-}
-
 function showDisable(cardId) {
     document.getElementById('disableCardId').textContent = cardId;
     document.getElementById('disableModal').style.display = 'flex';
     document.getElementById('disableReason').value = '';
 }
-
-function closeModal() {
-    document.getElementById('disableModal').style.display = 'none';
-}
-
+function closeModal() { document.getElementById('disableModal').style.display = 'none'; }
 function confirmDisable() {
-    const cardId = document.getElementById('disableCardId').textContent;
-    const reason = document.getElementById('disableReason').value;
-    fetch('/api/card/disable', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({card_id: cardId, reason: reason})
-    })
-    .then(r => r.json())
-    .then(data => {
-        alert(data.success ? '✅ 禁用成功' : '❌ ' + data.message);
-        closeModal();
-        loadAllCards();
+    var cardId = document.getElementById('disableCardId').textContent;
+    var reason = document.getElementById('disableReason').value;
+    fetch('/api/card/disable', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({card_id: cardId, reason: reason}) })
+    .then(function(r) { return r.json(); }).then(function(data) {
+        showToast(data.message, data.success ? 'success' : 'error');
+        closeModal(); loadAllCards();
     });
 }
-
 function enableCard(cardId) {
     if (!confirm('确认解禁该会员卡吗？')) return;
-    fetch('/api/card/enable', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({card_id: cardId})
-    })
-    .then(r => r.json())
-    .then(data => {
-        alert(data.success ? '✅ 解禁成功' : '❌ ' + data.message);
+    fetch('/api/card/enable', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({card_id: cardId}) })
+    .then(function(r) { return r.json(); }).then(function(data) {
+        showToast(data.message, data.success ? 'success' : 'error');
         loadAllCards();
     });
 }
-
-window.onload = function() { loadAllCards(); };
 </script>
 {% endblock %}

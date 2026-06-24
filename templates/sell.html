@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>售卡管理</h2>
+<div class="card" style="max-width:600px;">
+    <h3>新会员开卡</h3>
+    <div class="grid-2">
+        <div class="form-group"><label>姓名：</label><input type="text" id="sellName" placeholder="会员姓名"></div>
+        <div class="form-group"><label>电话：</label><input type="text" id="sellPhone" placeholder="联系电话"></div>
+        <div class="form-group"><label>证件号：</label><input type="text" id="sellIdNumber" placeholder="身份证号"></div>
+        <div class="form-group"><label>地址：</label><input type="text" id="sellAddress" placeholder="通讯地址"></div>
+        <div class="form-group"><label>卡类型：</label><select id="sellCardType"><option value="储值卡">储值卡</option><option value="折扣卡">折扣卡</option></select></div>
+        <div class="form-group"><label>初始金额（储值卡）：</label><input type="number" id="sellBalance" value="0" step="0.01"></div>
+        <div class="form-group"><label>折扣率（折扣卡）：</label><input type="number" id="sellDiscount" value="1.00" step="0.01" min="0" max="1"></div>
+    </div>
+    <button class="btn" onclick="sellCard()" style="margin-top:1rem;">确认售卡</button>
+    <div id="sellResult" style="margin-top:1rem;color:#6b7280;"></div>
+</div>
+<script>
+function sellCard() {
+    var data = {
+        name: document.getElementById('sellName').value,
+        phone: document.getElementById('sellPhone').value,
+        id_number: document.getElementById('sellIdNumber').value,
+        address: document.getElementById('sellAddress').value,
+        card_type: document.getElementById('sellCardType').value,
+        balance: parseFloat(document.getElementById('sellBalance').value) || 0,
+        discount: parseFloat(document.getElementById('sellDiscount').value) || 1.0
+    };
+    if (!data.name || !data.phone) { showToast('请填写姓名和电话', 'error'); return; }
+    fetch('/api/sell', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+    .then(function(r) { return r.json(); }).then(function(res) {
+        showToast(res.message, res.success ? 'success' : 'error');
+        if (res.success) {
+            document.getElementById('sellResult').textContent = '新卡号：' + res.card_id;
+        }
+    });
+}
+</script>
+{% endblock %}

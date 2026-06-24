@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>消费管理</h2>
+<div class="grid-2">
+    <div class="card">
+        <h3>消费登记</h3>
+        <div class="form-group"><label>卡号：</label><input type="text" id="consumeCardId" placeholder="输入会员卡号"></div>
+        <div class="form-group"><label>消费金额：</label><input type="number" id="consumeAmount" placeholder="输入金额" step="0.01"></div>
+        <div class="form-group"><label>备注：</label><input type="text" id="consumeRemark" placeholder="消费备注（可选）"></div>
+        <button class="btn" onclick="addConsume()">确认消费</button>
+    </div>
+    <div class="card">
+        <h3>每日消费报表</h3>
+        <button class="btn btn-gray" onclick="loadReport()" style="margin-bottom:1rem;">刷新报表</button>
+        <table>
+            <thead><tr><th>日期</th><th>消费次数</th><th>消费总额</th></tr></thead>
+            <tbody id="reportBody"><tr><td colspan="3" style="text-align:center;color:#999;">点击刷新加载</td></tr></tbody>
+        </table>
+    </div>
+</div>
+<div class="card" style="margin-top:1.5rem;">
+    <h3>消费记录明细</h3>
+    <button class="btn btn-gray" onclick="loadConsumeList()" style="margin-bottom:1rem;">刷新记录</button>
+    <table>
+        <thead><tr><th>流水号</th><th>卡号</th><th>消费金额</th><th>消费时间</th><th>备注</th></tr></thead>
+        <tbody id="consumeListBody"><tr><td colspan="5" style="text-align:center;color:#999;">点击刷新加载</td></tr></tbody>
+    </table>
+</div>
+<script>
+function addConsume() {
+    var cardId = document.getElementById('consumeCardId').value;
+    var amount = document.getElementById('consumeAmount').value;
+    var remark = document.getElementById('consumeRemark').value;
+    if (!cardId || !amount) { showToast('请填写卡号和金额', 'error'); return; }
+    fetch('/api/consume', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({card_id: cardId, amount: parseFloat(amount), remark: remark}) })
+    .then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            showToast('消费成功！卡号 ' + cardId + ' 消费 ' + amount + ' 元', 'success');
+            document.getElementById('consumeCardId').value = '';
+            document.getElementById('consumeAmount').value = '';
+            document.getElementById('consumeRemark').value = '';
+            loadConsumeList();
+            loadReport();
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+function loadReport() {
+    fetch('/api/consume/report').then(function(r) { return r.json(); }).then(function(data) {
+        var tbody = document.getElementById('reportBody');
+        if (!data.success || !data.data || data.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999;">暂无数据</td></tr>'; return;
+        }
+        tbody.innerHTML = data.data.map(function(row) {
+            return '<tr><td>' + (row.day || '') + '</td><td>' + (row.count || 0) + '</td><td>' + (row.total || 0) + '</td></tr>';
+        }).join('');
+    });
+}
+function loadConsumeList() {
+    fetch('/api/consume/list').then(function(r) { return r.json(); }).then(function(data) {
+        var tbody = document.getElementById('consumeListBody');
+        if (!data.success || !data.data || data.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">暂无消费记录</td></tr>'; return;
+        }
+        tbody.innerHTML = data.data.map(function(row) {
+            return '<tr><td>' + row.consume_id + '</td><td>' + row.card_id + '</td><td>' + row.consume_amount + '</td><td>' + row.consume_date + '</td><td>' + (row.remark || '') + '</td></tr>';
+        }).join('');
+    });
+}
+loadConsumeList();
+loadReport();
+</script>
+{% endblock %}
